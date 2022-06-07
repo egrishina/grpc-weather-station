@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6E5782A2-CB18-4AA3-B790-2AFB33132DD5}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{5AF77368-DE11-4668-9BA9-B1014C2B7D23}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Route256.WeatherSensorService", "src\Route256.WeatherSensorService\Route256.WeatherSensorService.csproj", "{1C860805-6AAB-4D46-B0B6-D735717319FA}"
 EndProject
 Global
