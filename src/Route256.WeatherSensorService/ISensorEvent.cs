@@ -1,6 +1,6 @@
 ﻿namespace Route256.WeatherSensorService;
 
-public interface IWeatherSensorEvent
+public interface ISensorEvent
 {
     
 }

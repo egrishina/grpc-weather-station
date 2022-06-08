@@ -5,15 +5,23 @@ namespace Route256.WeatherSensorService;
 
 public class EventStorage : IEventStorage
 {
-    private readonly ConcurrentDictionary<long, IWeatherSensorEvent> _events = new();
-    
-    public void AddEvent(long id, IWeatherSensorEvent eventResponse)
+    private readonly ConcurrentDictionary<int, List<ISensorEvent>> _events = new();
+
+    public void AddEvent(int sensorId, ISensorEvent sensorEvent)
     {
-        _events.AddOrUpdate(id, _ => eventResponse, (_, _) => eventResponse);
+        _events.AddOrUpdate(sensorId,
+            _ => new List<ISensorEvent>() { sensorEvent },
+            (_, list) =>
+            {
+                list.Add(sensorEvent);
+                return list;
+            });
     }
 
-    public bool TryGetEvent(long id, [MaybeNullWhen(false)] out IWeatherSensorEvent eventResponse)
+    public bool TryGetLastEvent(int sensorId, [MaybeNullWhen(false)] out ISensorEvent sensorEvent)
     {
-        return _events.TryGetValue(id, out eventResponse);
+        var result = _events.TryGetValue(sensorId, out var sensorEvents);
+        sensorEvent = sensorEvents?.Last();
+        return result;
     }
 }

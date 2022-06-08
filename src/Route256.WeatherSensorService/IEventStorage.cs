@@ -4,7 +4,7 @@ namespace Route256.WeatherSensorService;
 
 public interface IEventStorage
 {
-    void AddEvent(long id, IWeatherSensorEvent eventResponse);
+    void AddEvent(int sensorId, ISensorEvent sensorEvent);
     
-    bool TryGetEvent(long id, [MaybeNullWhen(false)] out IWeatherSensorEvent eventResponse);
+    bool TryGetLastEvent(int sensorId, [MaybeNullWhen(false)] out ISensorEvent sensorEvent);
 }

@@ -13,9 +13,16 @@ public class WeatherSensorController : ControllerBase
         _eventStorage = eventStorage;
     }
 
-    [HttpGet("{id:long}")]
-    public async Task<ActionResult<WeatherSensorEventResponse>> GetCurrentStateAsync(long id)
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<SensorEvent>> GetSensorReadings(int id)
     {
-        return NoContent();
+        if (_eventStorage.TryGetLastEvent(id, out var sensorEvent))
+        {
+            return Ok(sensorEvent);
+        }
+        else
+        {
+            return NotFound(id);
+        }
     }
 }

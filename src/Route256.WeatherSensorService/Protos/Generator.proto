@@ -9,34 +9,20 @@ import "google/protobuf/timestamp.proto";
 
 service Generator
 {
-    rpc WeatherSensorEventStream(google.protobuf.Empty) returns (stream WeatherSensorEventResponse);
-    
-    rpc GetWeatherSensorState(GetWeatherSensorStateRequest) returns (GetWeatherSensorStateResponse);
+    rpc EventStream(stream EventStreamRequest) returns (stream EventStreamResponse);
 }
 
-message WeatherSensorEventResponse
+message EventStreamRequest
+{
+    int32 sensor_id = 1;
+}
+
+message EventStreamResponse
 {
     int64 id = 1;
     int32 sensor_id = 2;
     double temperature = 3;
-    double humidity = 4;
-    double carbon_dioxide = 5;
-}
-
-message GetWeatherSensorStateRequest
-{
-    repeated int32 id = 1;
-}
-
-message GetWeatherSensorStateResponse
-{
-    repeated WeatherSensorStateResponse result = 1;
-}
-
-message WeatherSensorStateResponse
-{
-    int32 id = 1;
-    double temperature = 2;
-    double humidity = 3;
-    double carbon_dioxide = 4;
+    int32 humidity = 4;
+    int32 carbon_dioxide = 5;
+    google.protobuf.Timestamp created_at = 6;
 }
