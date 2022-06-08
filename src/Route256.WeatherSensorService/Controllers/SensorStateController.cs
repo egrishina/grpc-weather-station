@@ -4,11 +4,11 @@ using Route256.WeatherSensorService.Models;
 namespace Route256.WeatherSensorService.Controllers;
 
 [Route("state")]
-public class WeatherSensorController : ControllerBase
+public class SensorStateController : ControllerBase
 {
     private readonly IEventStorage _eventStorage;
 
-    public WeatherSensorController(IEventStorage eventStorage)
+    public SensorStateController(IEventStorage eventStorage)
     {
         _eventStorage = eventStorage;
     }

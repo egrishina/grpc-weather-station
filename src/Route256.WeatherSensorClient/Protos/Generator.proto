@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package Route256.WeatherSensorService.EventGenerator;
+
+option csharp_namespace = "Route256.WeatherSensorService.EventGenerator";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service Generator
+{
+    rpc EventStream(stream EventStreamRequest) returns (stream EventStreamResponse);
+}
+
+message EventStreamRequest
+{
+    int32 sensor_id = 1;
+}
+
+message EventStreamResponse
+{
+    int64 id = 1;
+    int32 sensor_id = 2;
+    double temperature = 3;
+    int32 humidity = 4;
+    int32 carbon_dioxide = 5;
+    google.protobuf.Timestamp created_at = 6;
+}

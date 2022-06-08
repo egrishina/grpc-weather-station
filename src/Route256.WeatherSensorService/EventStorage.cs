@@ -24,4 +24,9 @@ public class EventStorage : IEventStorage
         sensorEvent = sensorEvents?.Last();
         return result;
     }
+
+    public bool TryGetAllEvents(int sensorId, [MaybeNullWhen(false)] out List<ISensorEvent> sensorEvents)
+    {
+        return _events.TryGetValue(sensorId, out sensorEvents);
+    }
 }

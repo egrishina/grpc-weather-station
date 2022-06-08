@@ -24,29 +24,39 @@ public class GeneratorService : Generator.GeneratorBase
         IServerStreamWriter<EventStreamResponse> responseStream,
         ServerCallContext context)
     {
-        await SendSensorEvent(responseStream, context, Location.Indoors);
-        await SendSensorEvent(responseStream, context, Location.Outdoors);
+        try
+        {
+            //var tasks = new List<Task>();
+            while (await requestStream.MoveNext() && !context.CancellationToken.IsCancellationRequested)
+            {
+                var request = requestStream.Current;
+                await SendSensorEvent(responseStream, request.SensorId);
+                //tasks.Add(SendSensorEvent(responseStream, context, request.SensorId));
+            }
+
+            //await Task.WhenAll(tasks);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("The operation was canceled");
+        }
     }
 
     private async Task SendSensorEvent(
         IServerStreamWriter<EventStreamResponse> responseStream,
-        ServerCallContext context,
-        Location location)
+        int sensorId)
     {
-        try
+        if (_storage.TryGetLastEvent(sensorId, out var sensorEvent))
         {
-            while (!context.CancellationToken.IsCancellationRequested)
-            {
-                await Task.Delay(1000, context.CancellationToken);
-                if (_storage.TryGetLastEvent(1, out var result))
-                {
-                    await responseStream.WriteAsync((EventStreamResponse)result, context.CancellationToken);
-                }
-            }
+            await responseStream.WriteAsync((EventStreamResponse)sensorEvent);
         }
-        catch (OperationCanceledException e)
-        {
-            _logger.LogWarning("The operation was canceled");
-        }
+        
+        // int count = 0;
+        // if (_storage.TryGetAllEvents(sensorId, out var sensorEvents) && sensorEvents.Count > count)
+        // {
+        //     count = sensorEvents.Count;
+        //     await responseStream.WriteAsync((EventStreamResponse)sensorEvents[count - 1],
+        //         context.CancellationToken);
+        // }
     }
 }

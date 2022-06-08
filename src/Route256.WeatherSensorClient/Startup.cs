@@ -1,8 +1,4 @@
-﻿using Route256.WeatherSensorService.GrpcServices;
-using Route256.WeatherSensorService.Options;
-using Route256.WeatherSensorService.Services;
-
-namespace Route256.WeatherSensorService;
+﻿namespace Route256.WeatherSensorClient;
 
 public class Startup
 {
@@ -12,15 +8,13 @@ public class Startup
     {
         _configuration = configuration;
     }
-    
+
     public void ConfigureServices(IServiceCollection services)
     {
-        services.Configure<EventOptions>(_configuration.GetSection(EventOptions.Name));
-        services.AddGrpc();
-        services.AddHostedService<GeneratorHostedService>();
-        services.AddSingleton<IEventStorage, EventStorage>();
+        services.AddGrpcClient<Route256.WeatherSensorService.EventGenerator.Generator.GeneratorClient>(
+            options => { options.Address = new Uri("https://localhost:7068"); });
+
         services.AddControllers();
-        services.AddMvcCore();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -37,7 +31,6 @@ public class Startup
             endpoints.MapGet("/",
                 async context => { await context.Response.WriteAsync("Hello World!"); });
             endpoints.MapControllers();
-            endpoints.MapGrpcService<GeneratorService>();
         });
     }
 }
