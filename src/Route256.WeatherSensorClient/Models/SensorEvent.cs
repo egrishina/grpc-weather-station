@@ -1,6 +1,6 @@
-﻿namespace Route256.WeatherSensorService.Models;
+﻿namespace Route256.WeatherSensorClient.Models;
 
-public class SensorEvent
+public class SensorEvent : ISensorEvent
 {
     public long Id { get; set; }
 

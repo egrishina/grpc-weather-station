@@ -13,7 +13,7 @@ public class SensorStateController : ControllerBase
         _eventStorage = eventStorage;
     }
 
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:int}")] //https://localhost:7068/state/1
     public async Task<ActionResult<SensorEvent>> GetSensorReadings(int id)
     {
         if (_eventStorage.TryGetLastEvent(id, out var sensorEvent))

@@ -1,10 +1,5 @@
-﻿using Google.Protobuf.WellKnownTypes;
-using Grpc.Core;
-using Microsoft.Extensions.Options;
+﻿using Grpc.Core;
 using Route256.WeatherSensorService.EventGenerator;
-using Route256.WeatherSensorService.Models;
-using Route256.WeatherSensorService.Options;
-using Route256.WeatherSensorService.Services;
 
 namespace Route256.WeatherSensorService.GrpcServices;
 
@@ -26,15 +21,11 @@ public class GeneratorService : Generator.GeneratorBase
     {
         try
         {
-            //var tasks = new List<Task>();
             while (await requestStream.MoveNext() && !context.CancellationToken.IsCancellationRequested)
             {
                 var request = requestStream.Current;
-                await SendSensorEvent(responseStream, request.SensorId);
-                //tasks.Add(SendSensorEvent(responseStream, context, request.SensorId));
+                await SendSensorEvents(responseStream, context, request.SensorId);
             }
-
-            //await Task.WhenAll(tasks);
         }
         catch (OperationCanceledException)
         {
@@ -42,21 +33,18 @@ public class GeneratorService : Generator.GeneratorBase
         }
     }
 
-    private async Task SendSensorEvent(
-        IServerStreamWriter<EventStreamResponse> responseStream,
-        int sensorId)
+    private async Task SendSensorEvents(IServerStreamWriter<EventStreamResponse> responseStream,
+        ServerCallContext context, int sensorId)
     {
-        if (_storage.TryGetLastEvent(sensorId, out var sensorEvent))
+        int count = 0;
+        while (!context.CancellationToken.IsCancellationRequested)
         {
-            await responseStream.WriteAsync((EventStreamResponse)sensorEvent);
+            if (_storage.TryGetAllEvents(sensorId, out var sensorEvents) && sensorEvents.Count > count)
+            {
+                count = sensorEvents.Count;
+                await responseStream.WriteAsync((EventStreamResponse)sensorEvents[count - 1],
+                    context.CancellationToken);
+            }
         }
-        
-        // int count = 0;
-        // if (_storage.TryGetAllEvents(sensorId, out var sensorEvents) && sensorEvents.Count > count)
-        // {
-        //     count = sensorEvents.Count;
-        //     await responseStream.WriteAsync((EventStreamResponse)sensorEvents[count - 1],
-        //         context.CancellationToken);
-        // }
     }
 }

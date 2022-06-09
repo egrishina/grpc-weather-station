@@ -1,65 +1,114 @@
-﻿using Grpc.Core;
-using Microsoft.AspNetCore.Mvc;
-using Route256.WeatherSensorService.EventGenerator;
-using Route256.WeatherSensorService.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Route256.WeatherSensorClient.Models;
+using Route256.WeatherSensorClient.Options;
 
 namespace Route256.WeatherSensorClient.Controllers;
 
 [Route("events")]
 public class SensorEventsController : Controller
 {
-    private readonly Generator.GeneratorClient _generatorClient;
-    private readonly IServiceProvider _provider;
-    private readonly ILogger<SensorEventsController> _logger;
+    private readonly IEventStorage _storage;
+    private readonly ISubscriptionService _subscriptionService;
+    private readonly EventOptions _options;
 
-    public SensorEventsController(Generator.GeneratorClient generatorClient, IServiceProvider provider,
-        ILogger<SensorEventsController> logger)
+    public SensorEventsController(IEventStorage storage, ISubscriptionService subscriptionService,
+        IOptions<EventOptions> options)
     {
-        _generatorClient = generatorClient;
-        _provider = provider;
-        _logger = logger;
+        _storage = storage;
+        _subscriptionService = subscriptionService;
+        _options = options.Value;
     }
 
     [HttpGet("subscribe")] //https://localhost:7289/events/subscribe/?id=1&id=2
-    public async Task<ActionResult<SensorEvent>> SubscribeAsync([FromQuery(Name = "id")] List<int> ids,
-        CancellationToken cancellationToken)
+    public async Task SubscribeAsync([FromQuery(Name = "id")] List<int> ids)
     {
-        try
+        foreach (var id in ids)
         {
-            using var stream = _generatorClient.EventStream(cancellationToken: cancellationToken);
-
-            while (true)
-            {
-                //TODO set SensorId from input
-                await stream.RequestStream.WriteAsync(new EventStreamRequest { SensorId = 1 }, cancellationToken);
-
-                while (await stream.ResponseStream.MoveNext(cancellationToken))
-                {
-                    var response = stream.ResponseStream.Current;
-                    var sensorEvent = new SensorEvent
-                    {
-                        Id = response.Id,
-                        SensorId = response.SensorId,
-                        Temperature = response.Temperature,
-                        Humidity = response.Humidity,
-                        CarbonDioxide = response.CarbonDioxide,
-                        CreatedAt = response.CreatedAt.ToDateTime()
-                    };
-
-                    return Ok(sensorEvent);
-                }
-            }
+            _subscriptionService.SubscribeSensor(id);
         }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("The operation was canceled");
-        }
-
-        return Ok();
     }
 
-    [HttpGet("unsubscribe")]
+    [HttpGet("unsubscribe")] //https://localhost:7289/events/unsubscribe/?id=1&id=2
     public async Task UnsubscribeAsync([FromQuery(Name = "id")] List<int> ids)
     {
+        foreach (var id in ids)
+        {
+            _subscriptionService.UnsubscribeSensor(id);
+        }
+    }
+
+    [HttpGet("temperature/{start:datetime}")]
+    public async Task<ActionResult<List<double>>> GetAverageTemperatureAsync(DateTime start)
+    {
+        var periodMin = (int)(DateTime.Now - start).TotalMinutes;
+        var result = new List<double>();
+        var sensors = _subscriptionService.GetSubscribedSensors();
+        foreach (var sensor in sensors)
+        {
+            var tmp = _storage.GetAverageTemperature(sensor, periodMin);
+            result.Add(tmp);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("humidity/{start:datetime}")]
+    public async Task<ActionResult<List<double>>> GetAverageHumidityAsync(DateTime start)
+    {
+        var periodMin = (int)(DateTime.Now - start).TotalMinutes;
+        var result = new List<double>();
+        var sensors = _subscriptionService.GetSubscribedSensors();
+        foreach (var sensor in sensors)
+        {
+            var hmd = _storage.GetAverageHumidity(sensor, periodMin);
+            result.Add(hmd);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("carbon-min/{start:datetime}")]
+    public async Task<ActionResult<List<int>>> GetMinCarbonDioxideAsync(DateTime start)
+    {
+        var periodMin = (int)(DateTime.Now - start).TotalMinutes;
+        var result = new List<double>();
+        var sensors = _subscriptionService.GetSubscribedSensors();
+        foreach (var sensor in sensors)
+        {
+            var cd = _storage.GetMinCarbonDioxide(sensor, periodMin);
+            result.Add(cd);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("carbon-max/{start:datetime}")]
+    public async Task<ActionResult<List<int>>> GetMaxCarbonDioxideAsync(DateTime start)
+    {
+        var periodMin = (int)(DateTime.Now - start).TotalMinutes;
+        var result = new List<double>();
+        var sensors = _subscriptionService.GetSubscribedSensors();
+        foreach (var sensor in sensors)
+        {
+            var cd = _storage.GetMaxCarbonDioxide(sensor, periodMin);
+            result.Add(cd);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("all")] //https://localhost:7289/events/all
+    public async Task<ActionResult<List<SensorEvent>>> GetAllEventsAsync()
+    {
+        var result = _storage.GetAllEvents().Cast<SensorEvent>();
+        return Ok(result);
+    }
+
+    [HttpPost("{interval:int}")] //https://localhost:7289/events/10
+    public async Task<ActionResult> SetAggregationIntervalAsync(int interval)
+    {
+        _options.AggregationPeriodMin = interval;
+        return NoContent();
     }
 }
