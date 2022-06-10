@@ -1,16 +1,23 @@
-﻿namespace Route256.WeatherSensorClient.Models;
+﻿using Route256.WeatherSensorClient.Interfaces;
+
+namespace Route256.WeatherSensorClient.Models;
 
 public class SensorEvent : ISensorEvent
 {
-    public long Id { get; set; }
+    public SensorEvent(long id, int sensorId, double temperature, int humidity, int carbonDioxide, DateTime createdAt)
+    {
+        Id = id;
+        SensorId = sensorId;
+        Temperature = temperature;
+        Humidity = humidity;
+        CarbonDioxide = carbonDioxide;
+        CreatedAt = createdAt;
+    }
 
-    public int SensorId { get; set; }
-
-    public double Temperature { get; set; }
-
-    public int Humidity { get; set; }
-
-    public int CarbonDioxide { get; set; }
-
-    public DateTime CreatedAt { get; set; }
+    public long Id { get; }
+    public int SensorId { get; }
+    public double Temperature { get; }
+    public int Humidity { get; }
+    public int CarbonDioxide { get; }
+    public DateTime CreatedAt { get; }
 }

@@ -12,17 +12,18 @@ public class GeneratorHostedService : BackgroundService
     private readonly IEventStorage _storage;
     private readonly ILogger<GeneratorHostedService> _logger;
     private readonly EventOptions _options;
-    
+
     private long _eventId;
 
-    public GeneratorHostedService(IEventStorage storage, ILogger<GeneratorHostedService> logger, IOptions<EventOptions> options)
+    public GeneratorHostedService(IEventStorage storage, ILogger<GeneratorHostedService> logger,
+        IOptions<EventOptions> options)
     {
         _storage = storage;
         _logger = logger;
         _options = options.Value;
         _eventId = 0;
     }
-    
+
     public int GenerationIntervalMs => _options.GenerationIntervalMs;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -31,7 +32,7 @@ public class GeneratorHostedService : BackgroundService
         var task2 = GenerateSensorEvent(stoppingToken, Location.Outdoors);
         await Task.WhenAll(task1, task2);
     }
-    
+
     private async Task GenerateSensorEvent(CancellationToken stoppingToken, Location location)
     {
         try

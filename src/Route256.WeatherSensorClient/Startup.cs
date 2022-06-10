@@ -1,4 +1,5 @@
-﻿using Route256.WeatherSensorClient.Options;
+﻿using Route256.WeatherSensorClient.Interfaces;
+using Route256.WeatherSensorClient.Options;
 using Route256.WeatherSensorClient.Services;
 
 namespace Route256.WeatherSensorClient;
@@ -20,7 +21,7 @@ public class Startup
         services.Configure<EventOptions>(_configuration.GetSection(EventOptions.Name));
         services.AddHostedService<ReceiverHostedService>();
         services.AddSingleton<ISubscriptionService, SubscriptionService>();
-        services.AddSingleton<IEventStorage, EventStorage>();
+        services.AddSingleton<IDataStorage, DataStorage>();
         services.AddControllers();
     }
 

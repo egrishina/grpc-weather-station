@@ -1,9 +1,11 @@
-﻿namespace Route256.WeatherSensorClient.Services;
+﻿using Route256.WeatherSensorClient.Interfaces;
+
+namespace Route256.WeatherSensorClient.Services;
 
 public class SubscriptionService : ISubscriptionService
 {
-    private readonly HashSet<int> _subscribedSensors = new HashSet<int>();
-    
+    private readonly HashSet<int> _subscribedSensors = new();
+
     public void SubscribeSensor(int sensorId)
     {
         _subscribedSensors.Add(sensorId);

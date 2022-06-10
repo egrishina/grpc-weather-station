@@ -1,15 +1,16 @@
-﻿using Route256.WeatherSensorClient.Models;
+﻿using Route256.WeatherSensorClient.Interfaces;
+using Route256.WeatherSensorClient.Models;
 using Route256.WeatherSensorService.EventGenerator;
 
 namespace Route256.WeatherSensorClient.Services;
 
 public class ReceiverHostedService  : BackgroundService
 {
-    private readonly IEventStorage _storage;
+    private readonly IDataStorage _storage;
     private readonly ISubscriptionService _subscriptionService;
     private readonly IServiceProvider _provider;
 
-    public ReceiverHostedService(IEventStorage storage, ISubscriptionService subscriptionService,
+    public ReceiverHostedService(IDataStorage storage, ISubscriptionService subscriptionService,
         IServiceProvider provider)
     {
         _storage = storage;
@@ -32,15 +33,8 @@ public class ReceiverHostedService  : BackgroundService
         while (await stream.ResponseStream.MoveNext(stoppingToken))
         {
             var response = stream.ResponseStream.Current;
-            var sensorEvent = new SensorEvent
-            {
-                Id = response.Id,
-                SensorId = response.SensorId,
-                Temperature = response.Temperature,
-                Humidity = response.Humidity,
-                CarbonDioxide = response.CarbonDioxide,
-                CreatedAt = response.CreatedAt.ToDateTime()
-            };
+            var sensorEvent = new SensorEvent(response.Id, response.SensorId, response.Temperature, response.Humidity,
+                response.CarbonDioxide, response.CreatedAt.ToDateTime());
 
             _storage.AddEvent(sensorEvent.SensorId, sensorEvent);
         }

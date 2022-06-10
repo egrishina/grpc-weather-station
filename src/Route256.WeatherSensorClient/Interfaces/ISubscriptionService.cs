@@ -1,4 +1,4 @@
-﻿namespace Route256.WeatherSensorClient;
+﻿namespace Route256.WeatherSensorClient.Interfaces;
 
 public interface ISubscriptionService
 {

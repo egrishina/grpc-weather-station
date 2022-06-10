@@ -16,13 +16,11 @@ public class SensorStateController : ControllerBase
     [HttpGet("{id:int}")] //https://localhost:7068/state/1
     public async Task<ActionResult<SensorEvent>> GetSensorReadings(int id)
     {
-        if (_eventStorage.TryGetLastEvent(id, out var sensorEvent))
-        {
-            return Ok(sensorEvent);
-        }
-        else
+        if (!_eventStorage.TryGetLastEvent(id, out var sensorEvent))
         {
             return NotFound(id);
         }
+
+        return Ok(sensorEvent);
     }
 }
