@@ -21,7 +21,7 @@ public class DataStorage : IDataStorage
         if (_allData.TryGetValue(sensorId, out var values))
         {
             var last = values.Last();
-            if ((int)(DateTime.Now - last.CreatedAt).TotalMinutes < _options.AggregationPeriodMin)
+            if ((int)(DateTime.UtcNow - last.CreatedAt).TotalMinutes < _options.AggregationPeriodMin)
             {
                 last.AggregateEvent(sensorEvent);
             }
@@ -46,10 +46,12 @@ public class DataStorage : IDataStorage
             return 0;
         }
 
-        return values
+        var temperature = values
             .Where(x => x.CreatedAt > start && (int)(x.CreatedAt - start).TotalMinutes <= periodMin)
             .Select(y => y.AverageTemperature)
-            .Average();
+            .ToList();
+
+        return temperature.Any() ? temperature.Average() : 0;
     }
 
     public double GetAverageHumidity(int sensorId, DateTime start, int periodMin)
@@ -59,10 +61,12 @@ public class DataStorage : IDataStorage
             return 0;
         }
 
-        return values
+        var humidity = values
             .Where(x => x.CreatedAt > start && (int)(x.CreatedAt - start).TotalMinutes <= periodMin)
             .Select(y => y.AverageHumidity)
-            .Average();
+            .ToList();
+
+        return humidity.Any() ? humidity.Average() : 0;
     }
 
     public int GetMinCarbonDioxide(int sensorId, DateTime start, int periodMin)
@@ -72,10 +76,12 @@ public class DataStorage : IDataStorage
             return 0;
         }
 
-        return values
+        var minCO2 = values
             .Where(x => x.CreatedAt > start && (int)(x.CreatedAt - start).TotalMinutes <= periodMin)
             .Select(y => y.MinCarbonDioxide)
-            .Min();
+            .ToList();
+
+        return minCO2.Any() ? minCO2.Min() : 0;
     }
 
     public int GetMaxCarbonDioxide(int sensorId, DateTime start, int periodMin)
@@ -85,14 +91,18 @@ public class DataStorage : IDataStorage
             return 0;
         }
 
-        return values
+        var maxCO2 = values
             .Where(x => x.CreatedAt > start && (int)(x.CreatedAt - start).TotalMinutes <= periodMin)
             .Select(y => y.MaxCarbonDioxide)
-            .Max();
+            .ToList();
+
+        return maxCO2.Any() ? maxCO2.Max() : 0;
     }
 
     public IEnumerable<IAggregated> GetAllData()
     {
-        return _allData.SelectMany(x => x.Value);
+        return _allData
+            .SelectMany(x => x.Value)
+            .OrderBy(y => y.CreatedAt);
     }
 }

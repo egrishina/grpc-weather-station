@@ -21,10 +21,17 @@ public class GeneratorService : Generator.GeneratorBase
     {
         try
         {
+            var sensorIds = new List<int>();
             while (await requestStream.MoveNext() && !context.CancellationToken.IsCancellationRequested)
             {
                 var request = requestStream.Current;
-                await SendSensorEvents(responseStream, context, request.SensorId);
+                sensorIds.Add(request.SensorId);
+            }
+
+            while (!context.CancellationToken.IsCancellationRequested)
+            {
+                var tasks = sensorIds.Select(id => SendSensorEvents(responseStream, context, id)).ToList();
+                await Task.WhenAll(tasks);
             }
         }
         catch (OperationCanceledException)
