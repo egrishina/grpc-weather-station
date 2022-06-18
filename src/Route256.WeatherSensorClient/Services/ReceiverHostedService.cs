@@ -1,4 +1,6 @@
-﻿using Route256.WeatherSensorClient.Interfaces;
+﻿using Grpc.Core;
+using Route256.WeatherSensorClient.Helpers;
+using Route256.WeatherSensorClient.Interfaces;
 using Route256.WeatherSensorClient.Models;
 using Route256.WeatherSensorService.EventGenerator;
 
@@ -13,6 +15,8 @@ public class ReceiverHostedService : BackgroundService
 
     private bool _waitForChangedSubscribers;
     private CancellationTokenSource _cancellationTokenSource;
+    private IEnumerable<int> _sensors;
+    private Generator.GeneratorClient _client;
 
     public ReceiverHostedService(IDataStorage storage, ISubscriptionService subscriptionService,
         IServiceProvider provider, ILogger<ReceiverHostedService> logger)
@@ -23,31 +27,23 @@ public class ReceiverHostedService : BackgroundService
         _logger = logger;
         _waitForChangedSubscribers = true;
         _cancellationTokenSource = new CancellationTokenSource();
+        _sensors = _subscriptionService.GetSubscribedSensors().ToList();
+        _subscriptionService.SubscribersChanged += StopWaiting;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await using var scope = _provider.CreateAsyncScope();
-        var client = scope.ServiceProvider.GetRequiredService<Generator.GeneratorClient>();
-        _subscriptionService.SubscribersChanged += StopWaiting;
+        _client = scope.ServiceProvider.GetRequiredService<Generator.GeneratorClient>();
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            _waitForChangedSubscribers = true;
             var waitingTask = WaitForChangedSubscribers();
-            var sensors = _subscriptionService.GetSubscribedSensors().ToList();
-            if (sensors.Any())
-            {
-                _cancellationTokenSource.Cancel();
-                _cancellationTokenSource = new CancellationTokenSource();
-                var token = _cancellationTokenSource.Token;
-                var receivingTask = ReceiveEventsFromSensors(sensors, client, token);
-                await Task.WhenAny(waitingTask, receivingTask);
-            }
-            else
-            {
-                await waitingTask;
-            }
+            var receivingTask = RetryHelper.DoWithRetryAsync(ReceiveEventsFromSensors, _logger,
+                RetryHelper.DefaultRetryCount, ex => ex is RpcException { StatusCode: StatusCode.Unavailable },
+                RetryHelper.DefaultRetryDelay);
+
+            await Task.WhenAny(waitingTask, receivingTask);
         }
     }
 
@@ -62,21 +58,26 @@ public class ReceiverHostedService : BackgroundService
         {
             await Task.Delay(100);
         }
+
+        _waitForChangedSubscribers = true;
+        _cancellationTokenSource.Cancel();
+        _cancellationTokenSource = new CancellationTokenSource();
+        _sensors = _subscriptionService.GetSubscribedSensors().ToList();
     }
 
-    private async Task ReceiveEventsFromSensors(IEnumerable<int> sensors, Generator.GeneratorClient client,
-        CancellationToken stoppingToken)
+    private async Task<bool> ReceiveEventsFromSensors()
     {
-        using var stream = client.EventStream(cancellationToken: stoppingToken);
-        foreach (var sensor in sensors)
+        using var stream = _client.EventStream(cancellationToken: _cancellationTokenSource.Token);
+        foreach (var sensor in _sensors)
         {
-            await stream.RequestStream.WriteAsync(new EventStreamRequest { SensorId = sensor }, stoppingToken);
+            await stream.RequestStream.WriteAsync(new EventStreamRequest { SensorId = sensor },
+                _cancellationTokenSource.Token);
         }
 
-        await Task.Delay(100, stoppingToken);
+        await Task.Delay(100, _cancellationTokenSource.Token);
         await stream.RequestStream.CompleteAsync();
 
-        while (await stream.ResponseStream.MoveNext(stoppingToken))
+        while (await stream.ResponseStream.MoveNext(_cancellationTokenSource.Token))
         {
             var response = stream.ResponseStream.Current;
             var sensorEvent = new SensorEvent(response.Id, response.SensorId, response.Temperature, response.Humidity,
@@ -84,5 +85,7 @@ public class ReceiverHostedService : BackgroundService
 
             _storage.AddEvent(sensorEvent.SensorId, sensorEvent);
         }
+
+        return true;
     }
 }

@@ -1,4 +1,5 @@
-﻿using Route256.WeatherSensorClient.Interfaces;
+﻿using Route256.WeatherSensorClient.Extensions;
+using Route256.WeatherSensorClient.Interfaces;
 using Route256.WeatherSensorClient.Options;
 using Route256.WeatherSensorClient.Services;
 
@@ -15,10 +16,11 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddGrpcClient<Route256.WeatherSensorService.EventGenerator.Generator.GeneratorClient>(
-            options => { options.Address = new Uri("https://localhost:7068"); });
-
         services.Configure<EventOptions>(_configuration.GetSection(EventOptions.Name));
+        services.Configure<WeatherSensorServiceOptions>(_configuration.GetSection($"ExternalApis:WeatherSensorService"));
+        
+        services.AddLocalGrpcClients(_configuration);
+
         services.AddHostedService<ReceiverHostedService>();
         services.AddSingleton<ISubscriptionService, SubscriptionService>();
         services.AddSingleton<IDataStorage, DataStorage>();
