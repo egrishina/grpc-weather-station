@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6E5782A2-CB18-4AA3-B790-2AFB33132DD5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Route256.WeatherSensorService", "src\Route256.WeatherSensorService\Route256.WeatherSensorService.csproj", "{1C860805-6AAB-4D46-B0B6-D735717319FA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Route256.WeatherSensorClient", "src\Route256.WeatherSensorClient\Route256.WeatherSensorClient.csproj", "{67D56003-5645-47DA-BA41-2E87C0804A78}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1C860805-6AAB-4D46-B0B6-D735717319FA} = {6E5782A2-CB18-4AA3-B790-2AFB33132DD5}
+		{67D56003-5645-47DA-BA41-2E87C0804A78} = {6E5782A2-CB18-4AA3-B790-2AFB33132DD5}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1C860805-6AAB-4D46-B0B6-D735717319FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C860805-6AAB-4D46-B0B6-D735717319FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C860805-6AAB-4D46-B0B6-D735717319FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C860805-6AAB-4D46-B0B6-D735717319FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67D56003-5645-47DA-BA41-2E87C0804A78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67D56003-5645-47DA-BA41-2E87C0804A78}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67D56003-5645-47DA-BA41-2E87C0804A78}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67D56003-5645-47DA-BA41-2E87C0804A78}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
